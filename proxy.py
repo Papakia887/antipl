@@ -46,6 +46,40 @@ def turn_on_proxy():
     except Exception as e:
         messagebox.showerror("오류", f"프록시를 켜는 동안 오류 발생: {str(e)}")
 
+# 프록시 상태 확인 함수
+def check_proxy_status():
+    try:
+        # Windows 인터넷 설정 가져오기
+        internet_options = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Internet Settings", 0, winreg.KEY_READ)
+        proxy_enabled = winreg.QueryValueEx(internet_options, "ProxyEnable")[0]
+        if proxy_enabled:
+            proxy_server = winreg.QueryValueEx(internet_options, "ProxyServer")[0]
+            for country, proxy_file in proxy_files.items():
+                if proxy_file in proxy_server:
+                    status_label.config(text=f"프록시 켜짐\n현재 국가: {country}")
+                    break
+            else:
+                status_label.config(text="프록시 켜짐\n현재 국가: 알 수 없음")
+        else:
+            status_label.config(text="프록시 꺼짐")
+
+        # 현재 IP 및 ping 정보 가져오기
+        result = subprocess.run(["ping", "-n", "1", "www.google.com"], capture_output=True, text=True)
+        if result.returncode == 0:
+            output_lines = result.stdout.splitlines()
+            for line in output_lines:
+                if "Reply from" in line:
+                    ip = line.split()[2].strip(':')
+                    status_label2.config(text=f"현재 IP: {ip}")
+                    break
+            else:
+                status_label2.config(text="현재 IP: 알 수 없음")
+        else:
+            status_label2.config(text="현재 IP: 알 수 없음")
+
+    except Exception as e:
+        messagebox.showerror("오류", f"상태 확인 중 오류 발생: {str(e)}")
+
 
 # 프록시를 끄는 함수
 def turn_off_proxy():
